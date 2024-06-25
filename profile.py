@@ -1,23 +1,30 @@
 import geni.portal as portal
 import geni.rspec.pg as rspec
-
+         
 # Create a Request object to start building the RSpec.
 request = portal.context.makeRequestRSpec()
 
-# Node 1: Ansible Master
-node1 = request.RawPC("node1")
-node1.hardware_type = "c8220"  # Change this to the desired hardware type
-node1.disk_image = "urn:publicid:IDN+emulab.net+image+emulab-ops:UBUNTU20-64-STD"  # Use a suitable image
-node1.addService(rspec.Execute(shell="sh", command="sudo apt-get update && sudo apt-get install -y ansible"))
+prefixForIP = "192.168.1."
+link = request.LAN("lan")
 
-# Node 2: Ansible Host
-node2 = request.RawPC("node2")
-node2.hardware_type = "c8220"  # Change this to the desired hardware type
-node2.disk_image = "urn:publicid:IDN+emulab.net+image+emulab-ops:UBUNTU20-64-STD"  # Use a suitable image
-node2.addService(rspec.Execute(shell="sh", command="sudo apt-get update && sudo apt-get install -y apache2"))
+# Create a XenVM
+for i in range(3):
+  if i == 0:
+    node = request.XenVM("webserver")
+  elif i == 1: 
+    node = request.XenVM("observer")
+  else:
+    node = request.XenVM("ldap")       
 
-# Define the link between the nodes
-link = request.Link(members=[node1, node2])
-
+  node.routable_control_ip = "true"
+  node.disk_image = "urn:publicid:IDN+emulab.net+image+emulab-ops:UBUNTU20-64-STD"
+  iface = node.addInterface("if" + str(i))
+  iface.component_id = "eth1"
+  iface.addAddress(rspec.IPv4Address(prefixForIP + str(i + 1), "255.255.255.0"))
+  link.addInterface(iface)
+  
+  #if i == 0:
+  #  node.addService(rspec.Execute(shell="sh", command="sudo bash /local/repository/setup_apache.sh"))
+    
 # Print the RSpec to the enclosing page.
 portal.context.printRequestRSpec()
