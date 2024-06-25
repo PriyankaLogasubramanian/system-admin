@@ -1,7 +1,0 @@
----
-mysql_root_password: "abc123"
-app_user: "loga"
-http_host: "HOSTNAME"
-http_conf: "HOSTNAME.conf"
-http_port: "80"
-disable_default: true
